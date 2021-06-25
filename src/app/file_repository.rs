@@ -1,15 +1,17 @@
-use std::fs::File;
-use std::fs::OpenOptions;
-
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::fs::OpenOptions;
 use uuid::Uuid;
 
 use crate::app::domain::entities::Event;
 use crate::app::domain::entities::Todo;
 use crate::app::domain::entities::TodoAddedEvent;
+use crate::app::domain::entities::TodoDeletedEvent;
 //use crate::app::domain::entities::TodoChangedEvent;
 use crate::app::domain::repository::{Repository, RepositoryError, RepositoryInitError, Savable};
+
+use super::domain::repository::Deletable;
 
 pub struct SingleFileRepository {}
 
@@ -84,6 +86,38 @@ impl Savable<TodoAddedEvent> for SingleFileRepository {
             .flush()
             .map_err(|err| RepositoryError::UnableToSave(Box::new(err)))?;
         Ok(())
+    }
+}
+
+impl Deletable<TodoDeletedEvent> for SingleFileRepository {
+    fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        match csv::Reader::from_path("todo.csv") {
+            Ok(csv) => {
+                let mut count = false;
+                let mut iter = csv.into_records();
+                let mut temp_file = csv::Writer::from_path(".todo.csv").unwrap();
+                temp_file
+                    .write_record(&["id", "task", "calender_date", "priority"])
+                    .or_else(|_| return Err(RepositoryError::FailedToExecuteDeletedEvent))?;
+                while let Some(result) = iter.next() {
+                    let field = result.map_err(|_| RepositoryError::FailedToExecuteDeletedEvent)?;
+                    if !field.get(0).unwrap().starts_with(id) {
+                        temp_file.write_record(&field);
+                    } else if !count {
+                        count = true;
+                    } else {
+                        panic!("Id not unique");
+                    }
+                }
+                if !count{
+                    println!("No todos found to delete");
+                }
+                temp_file.flush();
+                std::fs::rename(".todo.csv", "todo.csv");
+                Ok(())
+            }
+            Err(_) => Err(RepositoryError::FailedToExecuteDeletedEvent),
+        }
     }
 }
 

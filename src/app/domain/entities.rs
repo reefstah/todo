@@ -19,6 +19,10 @@ pub struct TodoAddedEvent {
     pub todo: Todo,
 }
 
+pub struct TodoDeletedEvent {
+    pub id: Uuid,
+}
+
 //pub struct TodoChangedEvent {
 //}
 

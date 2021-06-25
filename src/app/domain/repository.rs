@@ -17,6 +17,10 @@ pub trait Savable<T> {
     fn save(&self, event: T) -> Result<(), RepositoryError>;
 }
 
+pub trait Deletable<T> {
+    fn delete(&self, id:&str) -> Result<(), RepositoryError>;
+}
+
 pub enum RepositoryInitError {
     NotInitialized,
 }
@@ -24,6 +28,7 @@ pub enum RepositoryInitError {
 #[derive(Debug)]
 pub enum RepositoryError {
     DuplicateTodo,
+    FailedToExecuteDeletedEvent,
     UnableToSave(Box<dyn std::error::Error>),
 }
 

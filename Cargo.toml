@@ -1,7 +1,7 @@
 [package]
 name = "todo"
 version = "0.1.0"
-authors = ["reef <public@ralph.tech>"]
+authors = ["Shweta","Reef <public@ralph.tech>"]
 edition = "2018"
 
 [[bin]]
