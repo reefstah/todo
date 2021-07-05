@@ -8,14 +8,29 @@ use crate::app::domain::entities::Event;
 use crate::app::domain::entities::Todo;
 use crate::app::domain::entities::TodoAddedEvent;
 use crate::app::domain::entities::TodoDeletedEvent;
-//use crate::app::domain::entities::TodoChangedEvent;
-use crate::app::domain::repository::{Repository, RepositoryError, RepositoryInitError, Savable};
+use crate::app::domain::repository::{RepositoryError, RepositoryInitError, Savable};
 
 use super::domain::repository::Deletable;
+use super::domain::repository::Repository;
+use super::domain::repository::Retrievable;
 
 pub struct SingleFileRepository {}
 
 impl Repository for SingleFileRepository {
+    fn retrievable(&self) -> Option<Box<dyn Retrievable>> {
+        Some(Box::new(Self{}))
+    }
+
+    fn savable(&self) -> Option<Box<dyn Savable<TodoAddedEvent>>> {
+        Some(Box::new(Self{}))
+    }
+
+    fn deletable(&self) -> Option<Box<dyn Deletable<TodoDeletedEvent>>> {
+        Some(Box::new(Self{}))
+    }
+}
+
+impl Retrievable for SingleFileRepository {
     fn get_events(
         &self,
         _seq: u64,

@@ -1,13 +1,15 @@
 use crate::app::domain::aggregate::get_todos;
 use crate::app::domain::entities::{Todo, TodoAddedEvent};
-use crate::app::domain::repository::{Repository, RepositoryError, RepositoryInitError, Savable};
+use crate::app::domain::repository::{RepositoryError, RepositoryInitError, Savable};
+
+use super::repository::Retrievable;
 
 pub trait Presenter {
     fn success(&self, result: Vec<Todo>, last_error: Option<RepositoryError>);
     fn failed(&self, error: RepositoryInitError);
 }
 
-pub fn show_relevant_usecase<T: Repository, P: Presenter>(repository: T, presenter: P) {
+pub fn show_relevant_usecase<P: Presenter>(repository: &dyn Retrievable, presenter: P) {
     match get_todos(repository) {
         Ok(mut iter) => {
             let mut result = Vec::with_capacity(10);

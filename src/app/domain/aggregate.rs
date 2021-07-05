@@ -1,8 +1,10 @@
 use crate::app::domain::entities::Todo;
-use crate::app::domain::repository::{Repository, RepositoryError, RepositoryInitError};
+use crate::app::domain::repository::{RepositoryError, RepositoryInitError};
 
-pub fn get_todos<T: Repository>(
-    repository: T,
+use super::repository::Retrievable;
+
+pub fn get_todos(
+    repository: &dyn Retrievable,
 ) -> Result<Box<dyn Iterator<Item = Result<Todo, RepositoryError>>>, RepositoryInitError> {
     match repository.get_events(0) {
         Ok(iter) => {

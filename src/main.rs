@@ -1,11 +1,11 @@
 use std::process;
 
-use clap::{ArgMatches, crate_authors, crate_name, crate_version};
+use clap::{crate_authors, crate_name, crate_version, ArgMatches};
 use uuid::Uuid;
 
 use clap::{App, Arg};
 
-use crate::app::domain::repository::Deletable;
+use crate::app::domain::repository::Repository;
 
 mod app;
 
@@ -51,36 +51,40 @@ fn main() {
         .get_matches();
 
     let repository = app::file_repository::SingleFileRepository {};
+    //let repository = app::jsonl_repository::JsonlRepository {};
 
     match matches.subcommand() {
         Some(("init", _)) => {
             if let Err(_) = app::file_repository::init() {
                 println!("Failed to initialize");
-                process::exit(1);
             }
         }
         Some(("rm", sub_m)) => {
             let id = sub_m.value_of("ID").unwrap();
-            if let Err(_) = repository.delete(id){
-                println!("Failed to delete");
-                process::exit(1);
-            }
-        }
-        _ => {}
-    }
 
-    match matches.value_of("TASK") {
-        Some(_) => {
-            let todo = matches.into();
-            if let Err(err) = app::usecases::new_todo(repository, todo) {
-                println!("error adding todo: {}", err);
-                process::exit(1);
+            if let Some(repository) = repository.deletable() {
+                repository.delete(id);
+            } else {
+                println!("Deletion not supported for your current TODO persistance");
             }
         }
-        None => {
-            let view = app::view::View {};
-            app::usecases::show_relevant_usecase(repository, view);
-        }
+        _ => match matches.value_of("TASK") {
+            Some(_) => {
+                let todo = matches.into();
+                if let Err(err) = app::usecases::new_todo(repository, todo) {
+                    println!("error adding todo: {}", err);
+                    process::exit(1);
+                }
+            }
+            None => {
+                if let Some(retrievable) = repository.retrievable() {
+                    let view = app::view::View {};
+                    app::usecases::show_relevant_usecase(retrievable.as_ref(), view);
+                } else {
+                    println!("Summary view not supported for your current TODO persistance");
+                }
+            }
+        },
     }
 }
 
