@@ -1,9 +1,9 @@
-use std::error::Error;
+use std::{error::Error, pin::Pin};
 use std::fmt;
 
 use crate::app::domain::entities::Event;
 
-use super::entities::{TodoAddedEvent, TodoDeletedEvent};
+use super::entities::{TodoAddedEvent, TodoDeletedEvent, TodoId, Stream};
 
 pub trait Repository {
 
@@ -11,11 +11,11 @@ pub trait Repository {
         Option::None
     }
 
-    fn savable(&self) -> Option<Box<dyn Savable<TodoAddedEvent>>> {
+    fn savable(&self) -> Option<Box<dyn Savable>> {
         Option::None
     }
 
-    fn deletable(&self) -> Option<Box<dyn Deletable<TodoDeletedEvent>>> {
+    fn deletable(&self) -> Option<Box<dyn Deletable>> {
         Option::None
     }
 }
@@ -30,11 +30,20 @@ pub trait Retrievable {
     >;
 }
 
-pub trait Savable<T> {
-    fn save(&self, event: T) -> Result<(), RepositoryError>;
+pub trait RetrievableBreak {
+    fn get_events_for(&self, todo_id: TodoId, event_id_offset: u64) -> Box<dyn Stream<Item = Box<dyn Event>> + Unpin>;
 }
 
-pub trait Deletable<T> {
+pub trait Identifyable {
+    fn get_todo_ids(&self, event_id_offset: u64) -> Box<dyn Stream<Item = TodoId> + Unpin>;
+
+}
+
+pub trait Savable {
+    fn save(&self, event: TodoAddedEvent) -> Result<(), RepositoryError>;
+}
+
+pub trait Deletable {
     fn delete(&self, id:&str) -> Result<(), RepositoryError>;
 }
 

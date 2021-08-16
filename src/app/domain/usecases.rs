@@ -1,35 +1,34 @@
-use crate::app::domain::aggregate::get_todos;
-use crate::app::domain::entities::{Todo, TodoAddedEvent};
+
+use crate::app::domain::entities::{Take, Todo, TodoAddedEvent};
 use crate::app::domain::repository::{RepositoryError, RepositoryInitError, Savable};
 
-use super::repository::Retrievable;
+use super::aggregate::TodoAggregate;
+use super::repository::{Identifyable, RetrievableBreak};
 
 pub trait Presenter {
     fn success(&self, result: Vec<Todo>, last_error: Option<RepositoryError>);
     fn failed(&self, error: RepositoryInitError);
 }
 
-pub fn show_relevant_usecase<P: Presenter>(repository: &dyn Retrievable, presenter: P) {
-    match get_todos(repository) {
-        Ok(mut iter) => {
-            let mut result = Vec::with_capacity(10);
-            let mut last_error: Option<RepositoryError> = None;
+pub struct ShowRelevantUseCase<'a, Repository: Identifyable + RetrievableBreak> {
+    aggregate: TodoAggregate<'a, Repository>,
+}
 
-            while result.len() < 10 {
-                match iter.next() {
-                    Some(Ok(todo)) => result.push(todo),
-                    Some(Err(_)) => {
-                        last_error = Some(RepositoryError::DuplicateTodo);
-                    }
-                    None => break,
-                }
-            }
-            presenter.success(result, last_error)
-        }
-        Err(_) => presenter.failed(RepositoryInitError::NotInitialized),
+impl<'a, Repository: Identifyable + RetrievableBreak> ShowRelevantUseCase<'a, Repository> {
+    pub fn execute(&'a self, presenter: impl Presenter) {
+        let mut todos = self.aggregate.get_todos();
+        let last_error: Option<RepositoryError> = None;
+
+        let result = todos.take(10);
+
+        presenter.success(result, last_error)
+    }
+
+    pub fn new(repository: &'a Repository) -> Self {
+        Self{aggregate: TodoAggregate::new(repository)}
     }
 }
 
-pub fn new_todo<T: Savable<TodoAddedEvent>>(repository: T, todo: Todo) -> Result<(), RepositoryError> {
+pub fn new_todo<T: Savable>(repository: T, todo: Todo) -> Result<(), RepositoryError> {
     repository.save(TodoAddedEvent { todo })
 }

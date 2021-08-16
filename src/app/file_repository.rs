@@ -21,11 +21,11 @@ impl Repository for SingleFileRepository {
         Some(Box::new(Self{}))
     }
 
-    fn savable(&self) -> Option<Box<dyn Savable<TodoAddedEvent>>> {
+    fn savable(&self) -> Option<Box<dyn Savable>> {
         Some(Box::new(Self{}))
     }
 
-    fn deletable(&self) -> Option<Box<dyn Deletable<TodoDeletedEvent>>> {
+    fn deletable(&self) -> Option<Box<dyn Deletable>> {
         Some(Box::new(Self{}))
     }
 }
@@ -81,7 +81,7 @@ impl From<Record> for Todo {
     }
 }
 
-impl Savable<TodoAddedEvent> for SingleFileRepository {
+impl Savable for SingleFileRepository {
     fn save(&self, event: TodoAddedEvent) -> Result<(), RepositoryError> {
         let file = OpenOptions::new()
             .write(true)
@@ -104,7 +104,7 @@ impl Savable<TodoAddedEvent> for SingleFileRepository {
     }
 }
 
-impl Deletable<TodoDeletedEvent> for SingleFileRepository {
+impl Deletable for SingleFileRepository {
     fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         match csv::Reader::from_path("todo.csv") {
             Ok(csv) => {

@@ -50,8 +50,8 @@ fn main() {
         )
         .get_matches();
 
-    let repository = app::file_repository::SingleFileRepository {};
-    //let repository = app::jsonl_repository::JsonlRepository {};
+    //let repository = app::file_repository::SingleFileRepository {};
+    let repository = app::jsonl_repository::JsonlRepository {};
 
     match matches.subcommand() {
         Some(("init", _)) => {
@@ -77,12 +77,9 @@ fn main() {
                 }
             }
             None => {
-                if let Some(retrievable) = repository.retrievable() {
-                    let view = app::view::View {};
-                    app::usecases::show_relevant_usecase(retrievable.as_ref(), view);
-                } else {
-                    println!("Summary view not supported for your current TODO persistance");
-                }
+                let view = app::view::View {};
+                let usecase = app::usecases::ShowRelevantUseCase::new(&repository);
+                usecase.execute(view);
             }
         },
     }
