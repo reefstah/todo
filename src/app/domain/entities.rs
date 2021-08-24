@@ -1,20 +1,62 @@
 use chrono::prelude::*;
 use uuid::Uuid;
 
-use crate::app::domain::repository::RepositoryError;
+#[derive(Clone, Copy, Debug)]
+pub struct TodoId(Uuid);
+
+impl From<TodoId> for Uuid {
+    fn from(todo_id: TodoId) -> Self {
+        todo_id.0
+    }
+}
+
+impl From<Uuid> for TodoId {
+    fn from(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+}
+
+impl PartialEq for TodoId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct EventId(Uuid);
+
+impl From<EventId> for Uuid {
+    fn from(event_id: EventId) -> Self {
+        event_id.0
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Todo {
-    pub id: Uuid,
+    pub id: TodoId,
     pub task: String,
     pub calender_date: Option<DateTime<Utc>>,
     pub priority: i8,
 }
 
-pub trait Event {
-    fn handle(&self, todo: Option<Todo>) -> Result<Todo, RepositoryError>;
+#[derive(Debug)]
+pub enum Event {
+    TodoAddedEvent(TodoAddedEvent),
+    TodoTagged(TodoId)
 }
 
+impl Event {
+    pub fn todo_id(&self) -> TodoId {
+        match &self {
+            Event::TodoAddedEvent(TodoAddedEvent {
+                todo
+            }) => todo.id,
+            Event::TodoTagged(todo_id) => todo_id.to_owned()
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct TodoAddedEvent {
     pub todo: Todo,
 }
@@ -22,26 +64,3 @@ pub struct TodoAddedEvent {
 pub struct TodoDeletedEvent {
     pub id: Uuid,
 }
-
-//pub struct TodoChangedEvent {
-//}
-
-impl Event for TodoAddedEvent {
-    fn handle(&self, todo: Option<Todo>) -> Result<Todo, RepositoryError> {
-        if let Some(_) = todo {
-            return Err(RepositoryError::DuplicateTodo);
-        }
-
-        Ok(self.todo.clone())
-    }
-}
-
-//struct TaskChangedEvent {
-//    pub value: String,
-//}
-//
-//struct OrderedEvent {
-//    seq: u64,
-//    creation_date: DateTime<Utc>,
-//    event: dyn Event,
-//}

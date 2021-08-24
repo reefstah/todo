@@ -1,6 +1,5 @@
 pub mod domain;
 
-pub mod file_repository;
 pub mod jsonl_repository;
 
 pub mod view;

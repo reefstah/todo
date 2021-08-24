@@ -1,12 +1,9 @@
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt::Display};
+use std::{fmt, result};
 
-use crate::app::domain::entities::Event;
-
-use super::entities::{TodoAddedEvent, TodoDeletedEvent};
+use super::entities::{Event, TodoAddedEvent, TodoDeletedEvent, TodoId};
 
 pub trait Repository {
-
     fn retrievable(&self) -> Option<Box<dyn Retrievable>> {
         Option::None
     }
@@ -20,40 +17,36 @@ pub trait Repository {
     }
 }
 
+pub type Result<T> = result::Result<T, RepositoryError>;
+
 pub trait Retrievable {
-    fn get_events(
-        &self,
-        seq: u64,
-    ) -> Result<
-        Box<dyn Iterator<Item = Result<Box<dyn Event>, RepositoryError>>>,
-        RepositoryInitError,
-    >;
+    fn get_events(&self, todo_id: TodoId) -> Result<TodoEventIter>;
+}
+
+pub trait Identifyable {
+    fn get_todo_ids(&self) -> Result<TodoIdIter>;
 }
 
 pub trait Savable<T> {
-    fn save(&self, event: T) -> Result<(), RepositoryError>;
+    fn save(&self, event: T) -> Result<()>;
 }
 
 pub trait Deletable<T> {
-    fn delete(&self, id:&str) -> Result<(), RepositoryError>;
-}
-
-
-pub enum RepositoryInitError {
-    NotInitialized,
+    fn delete(&self, id: &str) -> Result<()>;
 }
 
 #[derive(Debug)]
 pub enum RepositoryError {
-    DuplicateTodo,
-    FailedToExecuteDeletedEvent,
     UnableToSave(Box<dyn std::error::Error>),
+    FailedReadingSource(Box<dyn std::error::Error>),
+    FailedWhileReadingSource(Box<dyn Error>),
 }
 
-impl Error for RepositoryError {}
-
-impl fmt::Display for RepositoryError {
+impl Display for RepositoryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+        write!(f, "{}", &self)
     }
 }
+
+pub type TodoEventIter = Box<dyn Iterator<Item = Result<Event>>>;
+pub type TodoIdIter = Box<dyn Iterator<Item = Result<TodoId>>>;

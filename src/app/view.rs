@@ -4,8 +4,8 @@ use std::fmt::Result;
 
 
 use crate::app::domain::entities::Todo;
-use crate::app::domain::repository::{RepositoryError, RepositoryInitError};
-use crate::app::domain::usecases::Presenter;
+use crate::app::domain::repository::RepositoryError;
+use crate::app::domain::usecases::{Presenter, TodoError};
 
 pub struct View {}
 struct List(Vec<Todo>);
@@ -13,10 +13,6 @@ struct List(Vec<Todo>);
 
 impl Presenter for View {
     fn success(&self, result: Vec<Todo>, last_error: Option<RepositoryError>) {
-        // println!("{0} - {1}", "Todo", "Priority");
-        // for todo in result {
-        //     println!("{}", todo);
-        // }
         let list= List(result);
         println!("{}", list);
 
@@ -25,8 +21,8 @@ impl Presenter for View {
         }
     }
 
-    fn failed(&self, error: RepositoryInitError) {
-        println!("{}", error);
+    fn failed(&self, error: TodoError) {
+        println!("{:?}", error);
     }
 }
 
@@ -57,7 +53,7 @@ impl Display for Todo {
     }
 }
 
-impl Display for RepositoryInitError {
+impl Display for TodoError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", "failed")
     }

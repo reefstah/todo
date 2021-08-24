@@ -1,35 +1,39 @@
-use crate::app::domain::aggregate::get_todos;
+use crate::app::domain::aggregate::TodosAggregate;
 use crate::app::domain::entities::{Todo, TodoAddedEvent};
-use crate::app::domain::repository::{RepositoryError, RepositoryInitError, Savable};
+use crate::app::domain::repository::{RepositoryError, Savable};
 
-use super::repository::Retrievable;
+pub use super::aggregate::TodoError;
+use super::repository::{Identifyable, Retrievable};
 
 pub trait Presenter {
     fn success(&self, result: Vec<Todo>, last_error: Option<RepositoryError>);
-    fn failed(&self, error: RepositoryInitError);
+    fn failed(&self, error: TodoError);
 }
 
-pub fn show_relevant_usecase<P: Presenter>(repository: &dyn Retrievable, presenter: P) {
-    match get_todos(repository) {
-        Ok(mut iter) => {
-            let mut result = Vec::with_capacity(10);
-            let mut last_error: Option<RepositoryError> = None;
+pub fn new_todo<T: Savable<TodoAddedEvent>>(
+    repository: T,
+    todo: Todo,
+) -> Result<(), RepositoryError> {
+    repository.save(TodoAddedEvent { todo })
+}
 
-            while result.len() < 10 {
-                match iter.next() {
-                    Some(Ok(todo)) => result.push(todo),
-                    Some(Err(_)) => {
-                        last_error = Some(RepositoryError::DuplicateTodo);
-                    }
-                    None => break,
-                }
-            }
-            presenter.success(result, last_error)
+impl<'a, Repository: Identifyable + Retrievable> ShowRelevantUseCase<'a, Repository> {
+    pub fn execute(&'a self, presenter: impl Presenter) {
+        let todos = self.aggregate.get_todos();
+        let last_error: Option<RepositoryError> = None;
+
+        let result = todos.unwrap().take(10).map(|todo| todo.unwrap()).collect();
+
+        presenter.success(result, last_error)
+    }
+
+    pub fn new(repository: &'a Repository) -> Self {
+        Self {
+            aggregate: TodosAggregate::new(repository),
         }
-        Err(_) => presenter.failed(RepositoryInitError::NotInitialized),
     }
 }
 
-pub fn new_todo<T: Savable<TodoAddedEvent>>(repository: T, todo: Todo) -> Result<(), RepositoryError> {
-    repository.save(TodoAddedEvent { todo })
+pub struct ShowRelevantUseCase<'a, Repository: Identifyable + Retrievable> {
+    aggregate: TodosAggregate<'a, Repository>,
 }

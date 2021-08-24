@@ -62,7 +62,7 @@ struct Record {
 impl From<Todo> for Record {
     fn from(todo: Todo) -> Self {
         Record {
-            id: todo.id,
+            id: todo.id.into(),
             task: todo.task,
             calender_date: todo.calender_date,
             priority: todo.priority,
@@ -73,7 +73,7 @@ impl From<Todo> for Record {
 impl From<Record> for Todo {
     fn from(record: Record) -> Self {
         Todo {
-            id: record.id,
+            id: record.id.into(),
             task: record.task,
             calender_date: record.calender_date,
             priority: record.priority,

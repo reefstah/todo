@@ -50,14 +50,11 @@ fn main() {
         )
         .get_matches();
 
-    let repository = app::file_repository::SingleFileRepository {};
-    //let repository = app::jsonl_repository::JsonlRepository {};
+    let repository = app::jsonl_repository::JsonlRepository {};
 
     match matches.subcommand() {
         Some(("init", _)) => {
-            if let Err(_) = app::file_repository::init() {
                 println!("Failed to initialize");
-            }
         }
         Some(("rm", sub_m)) => {
             let id = sub_m.value_of("ID").unwrap();
@@ -77,12 +74,9 @@ fn main() {
                 }
             }
             None => {
-                if let Some(retrievable) = repository.retrievable() {
-                    let view = app::view::View {};
-                    app::usecases::show_relevant_usecase(retrievable.as_ref(), view);
-                } else {
-                    println!("Summary view not supported for your current TODO persistance");
-                }
+                let view = app::view::View {};
+                let usecase = app::usecases::ShowRelevantUseCase::new(&repository);
+                usecase.execute(view);
             }
         },
     }
@@ -95,7 +89,7 @@ impl From<ArgMatches> for app::domain::entities::Todo {
         let id = Uuid::new_v4();
 
         app::domain::entities::Todo {
-            id,
+            id: id.into(),
             task,
             calender_date: None,
             priority,
