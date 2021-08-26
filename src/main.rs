@@ -1,5 +1,3 @@
-use std::process;
-
 use clap::{crate_authors, crate_name, crate_version, ArgMatches};
 use uuid::Uuid;
 

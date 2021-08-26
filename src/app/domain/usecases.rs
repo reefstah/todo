@@ -3,18 +3,11 @@ use crate::app::domain::entities::{Todo, TodoAddedEvent};
 use crate::app::domain::repository::{RepositoryError, Savable};
 
 pub use super::aggregate::TodoError;
-use super::repository::{Identifyable, Initializable, Repository, Retrievable};
+use super::repository::{Identifyable, Initializable, Retrievable};
 
 pub trait ShowRelevantPresenter {
     fn success(&self, result: Vec<Todo>, last_error: Option<RepositoryError>);
     fn failed(&self, error: TodoError);
-}
-
-pub fn new_todo<T: Savable<TodoAddedEvent>>(
-    repository: T,
-    todo: Todo,
-) -> Result<(), RepositoryError> {
-    repository.save(TodoAddedEvent { todo })
 }
 
 pub trait NewTodoPresenter {
