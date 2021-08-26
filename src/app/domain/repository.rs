@@ -35,6 +35,10 @@ pub trait Deletable<T> {
     fn delete(&self, id: &str) -> Result<()>;
 }
 
+pub trait Initializable {
+    fn initialize(&self) -> Result<()>;
+}
+
 #[derive(Debug)]
 pub enum RepositoryError {
     UnableToSave(Box<dyn std::error::Error>),

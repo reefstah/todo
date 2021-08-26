@@ -54,7 +54,9 @@ fn main() {
 
     match matches.subcommand() {
         Some(("init", _)) => {
-                println!("Failed to initialize");
+            let view = app::view::InitializeView{};
+            let usecase = app::usecases::InitializeUseCase::new(repository);
+            usecase.execute(view)
         }
         Some(("rm", sub_m)) => {
             let id = sub_m.value_of("ID").unwrap();
@@ -67,14 +69,13 @@ fn main() {
         }
         _ => match matches.value_of("TASK") {
             Some(_) => {
+                let view = app::view::NewTodoView{};
+                let usecase = app::usecases::NewTodoUseCase::new(repository);
                 let todo = matches.into();
-                if let Err(err) = app::usecases::new_todo(repository, todo) {
-                    println!("error adding todo: {}", err);
-                    process::exit(1);
-                }
+                usecase.execute(todo, view);
             }
             None => {
-                let view = app::view::View {};
+                let view = app::view::ShowRelevantView {};
                 let usecase = app::usecases::ShowRelevantUseCase::new(&repository);
                 usecase.execute(view);
             }

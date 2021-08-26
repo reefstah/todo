@@ -10,7 +10,7 @@ use crate::app::domain::entities::{Todo, TodoAddedEvent};
 use crate::app::domain::repository::{Repository, RepositoryError, Savable};
 
 use super::domain::entities::{Event, TodoId};
-use super::domain::repository::{Identifyable, Result, Retrievable, TodoEventIter};
+use super::domain::repository::{Identifyable, Initializable, Result, Retrievable, TodoEventIter};
 
 pub struct JsonlRepository {}
 
@@ -131,6 +131,21 @@ impl Iterator for EventDataReader {
     }
 }
 
+impl Initializable for JsonlRepository {
+    fn initialize(&self) -> Result<()> {
+        let result = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(true)
+            .open("todo.jsonl");
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(RepositoryError::FailedWhileReadingSource(Box::new(e))),
+        }
+    }
+}
+
 impl Savable<TodoAddedEvent> for JsonlRepository {
     fn save(&self, event: TodoAddedEvent) -> Result<()> {
         let mut file = OpenOptions::new()
@@ -149,7 +164,6 @@ impl Savable<TodoAddedEvent> for JsonlRepository {
 
 impl From<std::io::Error> for RepositoryError {
     fn from(error: std::io::Error) -> Self {
-        println!("{:?}", error);
         Self::UnableToSave(Box::new(error))
     }
 }
