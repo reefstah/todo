@@ -11,7 +11,9 @@ use clap::{Parser, Subcommand};
 
 // Internal workspaces
 use usecases;
+mod add_todo_cli_presenter;
 mod fs_repository;
+use crate::add_todo_cli_presenter::AddTodoCliPresenter;
 use crate::fs_repository::FileSystemRepository;
 use usecases::AddTodoUsecase;
 use usecases::EditTodoInteractiveUsecase;
@@ -45,7 +47,8 @@ fn main() -> Result<(), std::io::Error> {
         Some(Commands::Add { content }) => {
             let todo_id = Uuid::new_v4();
             let usecase = AddTodoUsecase::new(&repository);
-            usecase.execute(String::from(content), todo_id);
+            let presenter = AddTodoCliPresenter::new(&todo_id);
+            usecase.execute(String::from(content), todo_id, &presenter);
         }
         Some(Commands::Edit {
             todo_id,
