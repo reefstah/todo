@@ -11,6 +11,14 @@ use uuid::Uuid;
 
 use clap::{Parser, Subcommand};
 
+// Internal workspaces
+use usecases;
+mod fs_repository;
+use crate::fs_repository::FileSystemRepository;
+use usecases::TodoSavable;
+use usecases::AddTodoUsecase;
+use entities::Todo;
+
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Cli {
@@ -31,6 +39,14 @@ enum Commands {
 }
 
 fn main() -> Result<(), std::io::Error> {
+
+    let repository = FileSystemRepository{};
+    let usecase = AddTodoUsecase::new(&repository);
+    let usecase = AddTodoUsecase::new(&repository);
+
+    usecase.execute(String::from("Woopdiedoo"));
+
+
     let cli = Cli::parse();
 
     let todo_dir = Path::new("todo/");
