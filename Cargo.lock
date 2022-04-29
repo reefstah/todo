@@ -94,6 +94,9 @@ dependencies = [
 [[package]]
 name = "entities"
 version = "0.1.0"
+dependencies = [
+ "uuid",
+]
 
 [[package]]
 name = "form_urlencoded"
@@ -110,6 +113,7 @@ name = "fs_repository"
 version = "0.1.0"
 dependencies = [
  "entities",
+ "uuid",
 ]
 
 [[package]]
@@ -420,6 +424,7 @@ name = "usecases"
 version = "0.1.0"
 dependencies = [
  "entities",
+ "uuid",
 ]
 
 [[package]]

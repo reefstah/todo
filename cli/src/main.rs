@@ -1,11 +1,9 @@
-use std::env;
 use std::fs;
 use std::fs::File;
-use std::fs::OpenOptions;
+
 use std::io;
 use std::io::prelude::*;
 use std::path::Path;
-use std::process::Command;
 
 use uuid::Uuid;
 
@@ -15,9 +13,9 @@ use clap::{Parser, Subcommand};
 use usecases;
 mod fs_repository;
 use crate::fs_repository::FileSystemRepository;
-use usecases::TodoSavable;
 use usecases::AddTodoUsecase;
-use entities::Todo;
+use usecases::EditTodoInteractiveUsecase;
+use usecases::EditTodoUsecase;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -32,69 +30,36 @@ enum Commands {
         content: String,
     },
     Edit {
-        todo_id: String,
+        todo_id: Uuid,
         #[clap(short, long)]
         content: Option<String>,
     },
 }
 
 fn main() -> Result<(), std::io::Error> {
-
-    let repository = FileSystemRepository{};
-    let usecase = AddTodoUsecase::new(&repository);
-    let usecase = AddTodoUsecase::new(&repository);
-
-    usecase.execute(String::from("Woopdiedoo"));
-
-
-    let cli = Cli::parse();
-
+    let repository = FileSystemRepository {};
     let todo_dir = Path::new("todo/");
+    let cli = Cli::parse();
 
     match cli.command {
         Some(Commands::Add { content }) => {
-            if !todo_dir.is_dir() {
-                fs::create_dir("todo").unwrap();
-            }
-
-            let uuid = Uuid::new_v4().to_string();
-            let name = todo_dir.to_str().unwrap().to_string() + &uuid;
-
-            let mut file = OpenOptions::new()
-                .read(false)
-                .write(true)
-                .create(true)
-                .open(name)?;
-
-            file.write(content.as_bytes())?;
-
-            println!("Command add invoked {}", content);
+            let todo_id = Uuid::new_v4();
+            let usecase = AddTodoUsecase::new(&repository);
+            usecase.execute(String::from(content), todo_id);
         }
         Some(Commands::Edit {
             todo_id,
             content: None,
         }) => {
-            let editor = env::var("EDITOR").unwrap();
-            let path = String::from("todo/") + &todo_id;
-            if Path::new(&path).exists() {
-                Command::new(editor).arg(path).spawn().unwrap().wait()?;
-            } else {
-                panic!("File doesn't exist");
-            }
+            let usecase = EditTodoInteractiveUsecase::new(&repository);
+            usecase.execute(todo_id);
         }
         Some(Commands::Edit {
             todo_id,
             content: Some(content),
         }) => {
-            let path = String::from("todo/") + &todo_id;
-            let path = Path::new(&path);
-            let mut file = OpenOptions::new()
-                .read(false)
-                .write(true)
-                .create(false)
-                .open(path)?;
-            println!("{}", &content);
-            file.write(content.as_bytes())?;
+            let usecase = EditTodoUsecase::new(&repository);
+            usecase.execute(content, todo_id);
         }
         None => {
             for entry in fs::read_dir(todo_dir)? {
