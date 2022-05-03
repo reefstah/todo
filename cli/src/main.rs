@@ -1,12 +1,4 @@
-use std::fs;
-use std::fs::File;
-
-use std::io;
-use std::io::prelude::*;
-use std::path::Path;
-
 use uuid::Uuid;
-
 use clap::{Parser, Subcommand};
 
 // Internal workspaces
@@ -18,6 +10,8 @@ use crate::fs_repository::FileSystemRepository;
 use usecases::AddTodoUsecase;
 use usecases::EditTodoInteractiveUsecase;
 use usecases::EditTodoUsecase;
+use usecases::ViewTodoUsecase;
+use usecases::DeleteTodoUsecase;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -36,11 +30,13 @@ enum Commands {
         #[clap(short, long)]
         content: Option<String>,
     },
+    Delete {
+        todo_id: Uuid,
+    }
 }
 
 fn main() -> Result<(), std::io::Error> {
     let repository = FileSystemRepository {};
-    let todo_dir = Path::new("todo/");
     let cli = Cli::parse();
 
     match cli.command {
@@ -64,27 +60,19 @@ fn main() -> Result<(), std::io::Error> {
             let usecase = EditTodoUsecase::new(&repository);
             usecase.execute(content, todo_id);
         }
+        Some(Commands::Delete {
+            todo_id
+        }) => {
+            let usecase = DeleteTodoUsecase::new(&repository);
+            usecase.execute(todo_id); 
+        }
         None => {
-            for entry in fs::read_dir(todo_dir)? {
-                let entry = entry?;
-                if let Ok(lines) = read_lines(entry.path()) {
-                    for line in lines {
-                        if let Ok(content) = line {
-                            println!("{}, {:?}", content, entry.file_name());
-                        }
-                    }
-                }
-            }
+            let usecase = ViewTodoUsecase::new(&repository);
+            usecase.execute(); 
         }
     }
 
     Ok(())
 }
 
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}
+

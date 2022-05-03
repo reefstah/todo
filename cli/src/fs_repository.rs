@@ -2,7 +2,9 @@ use entities::Todo;
 use usecases::TodoEditable;
 use usecases::TodoInteractiveEditable;
 use usecases::TodoSavable;
+use usecases::TodoViewable;
 use usecases::TodoSavableError;
+use usecases::TodoDeletable;
 use uuid::Uuid;
 
 pub struct FileSystemRepository {}
@@ -24,5 +26,19 @@ impl TodoEditable for FileSystemRepository {
 impl TodoInteractiveEditable for FileSystemRepository {
     fn edit(&self, todo_id: Uuid) {
         fs_repository::edit_iteractive(todo_id);
+    }
+}
+
+
+impl TodoViewable for FileSystemRepository {
+    fn view(&self) {
+        fs_repository::view();
+    }
+}
+
+
+impl TodoDeletable for FileSystemRepository {
+    fn delete(&self, todo_id: Uuid) {
+        fs_repository::delete(todo_id);
     }
 }

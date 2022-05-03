@@ -7,6 +7,8 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use uuid::Uuid;
+use std::io;
+use std::io::prelude::*;
 
 pub fn add(todo: Todo) -> Result<(), std::io::Error> {
     let todo_dir = Path::new("todo/");
@@ -43,6 +45,7 @@ pub fn edit(todo: Todo) -> Result<(), std::io::Error> {
     let mut file = OpenOptions::new()
         .read(false)
         .write(true)
+        .truncate(true)
         .create(false)
         .open(path)?;
     println!("{}", todo.content());
@@ -59,6 +62,35 @@ pub fn edit_iteractive(todo_id: Uuid) -> Result<(), std::io::Error> {
         panic!("File doesn't exist");
     }
     Ok(())
+}
+
+pub fn view() -> Result<(), std::io::Error> {
+    let todo_dir = Path::new("todo/"); 
+    for entry in fs::read_dir(todo_dir)? {
+        let entry = entry?;
+        if let Ok(lines) = read_lines(entry.path()) {
+            for line in lines {
+                if let Ok(content) = line {
+                    println!("{}, {:?}", content, entry.file_name());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn delete(todo_id: Uuid) -> Result<(), std::io::Error> {
+    let path = String::from("todo/") + &todo_id.to_string(); 
+    fs::remove_file(path)?;
+    Ok(())
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 #[cfg(test)]

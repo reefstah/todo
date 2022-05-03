@@ -1,4 +1,3 @@
-use entities::Todo;
 use uuid::Uuid;
 
 pub trait TodoInteractiveEditable {
